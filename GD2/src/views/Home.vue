@@ -1,5 +1,6 @@
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
+import axios from "axios";
 import Banner from "../components/Home/Banner.vue";
 import BlogItem from "../components/Home/BlogItem.vue";
 
@@ -8,6 +9,37 @@ const bannerList = ref([]);
 const postList = ref([]);
 const currentPage = ref(1);
 const totalPages = ref(1);
+
+const fetchPostData = async (page, size) => {
+  try {
+    const response = await axios.get("/blogs/get-by-page", {
+      params: {
+        page: page,
+        size: size,
+      },
+    });
+    console.log(response.data.posts);
+    currentPage.value = response.data.page;
+    totalPages.value = response.data.totalPages;
+    postList.value = [...postList.value, ...response.data.posts];
+  } catch (error) {
+    console.error("Error fetching post data:", error);
+  }
+
+  try {
+    const response = await axios.get("/blogs/get-5-most-watched");
+    console.log(response.data);
+    bannerList.value = response.data;
+  } catch (error) {
+    console.error("Error fetching post data:", error);
+  }
+
+  isLoading.value = false;
+};
+
+onMounted(() => {
+  fetchPostData(1, 6);
+});
 </script>
 <template>
   <div
