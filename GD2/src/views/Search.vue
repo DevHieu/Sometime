@@ -1,11 +1,30 @@
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import { useRoute, RouterLink } from "vue-router";
+import axios from "axios";
 
 const route = useRoute();
 
 const resultList = ref([]);
 const query = route.query.query;
+
+const getResult = async (searchQuery) => {
+  try {
+    const response = await axios.get("/blogs/search", {
+      params: {
+        query: searchQuery,
+      },
+    });
+    console.log(response.data);
+    resultList.value = response.data;
+  } catch (error) {
+    console.error("Error fetching post data:", error);
+  }
+};
+
+onMounted(() => {
+  getResult(query);
+});
 </script>
 
 <template>
