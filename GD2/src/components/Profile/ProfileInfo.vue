@@ -1,5 +1,7 @@
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
+import axios from "axios";
+import { uploadImage } from "../../services/uploadImageService";
 
 const emits = defineEmits(["handledToogle"]);
 
@@ -10,6 +12,57 @@ const email = ref("");
 const avatar = ref(null);
 const isAvatarChange = ref(false);
 const avatarFile = ref(null);
+
+onMounted(() => {
+  const data = JSON.parse(sessionStorage.getItem("user")); //Chuyển String sang Objext
+  username.value = data.username;
+  fullname.value = data.fullname;
+  email.value = data.email;
+  avatar.value = data.avatar;
+  console.log(data.avatar);
+});
+
+const handleAvatarChange = (e) => {
+  isAvatarChange.value = true;
+
+  const image = e.target.files[0];
+  const reader = new FileReader();
+  reader.readAsDataURL(image);
+  reader.onload = (e) => {
+    avatarFile.value = e.target.result;
+  };
+};
+
+const handleUpdateUser = async () => {
+  emits("handledToogle", true);
+
+  const payload = {
+    username: username.value,
+    fullname: fullname.value,
+    email: email.value,
+    avatar: avatar.value,
+  };
+
+  if (isAvatarChange.value) {
+    try {
+      const finalAvatarUrl = await uploadImage(avatarFile.value);
+      payload.avatar = finalAvatarUrl;
+    } catch (error) {
+      emits("handledToogle", false);
+      alert("Lỗi upload ảnh. Vui lòng thử lại.");
+      return;
+    }
+  }
+
+  const res = await axios.put("/user/update-info", payload);
+
+  if (res.data.status) {
+    sessionStorage.setItem("user", JSON.stringify(res.data.user));
+    window.location.reload();
+  }
+
+  emits("handledToogle", false);
+};
 </script>
 
 <template class="position-relative">
