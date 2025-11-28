@@ -6,13 +6,47 @@ const props = defineProps({
   },
 });
 
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
+import axios from "axios";
 import CommentItem from "./CommentItem.vue";
 
 const user = ref({});
 
 const comment = ref("");
 const commentList = ref([]);
+
+onMounted(async () => {
+  const resp = await axios.get("/comment/get-by-post-id", {
+    params: {
+      blogId: props.id,
+    },
+  });
+
+  commentList.value = resp.data.comments;
+  user.value = JSON.parse(sessionStorage.getItem("user"));
+});
+
+const handleSendComment = async () => {
+  const resp = await axios.post("/comment/add-comment", {
+    blogId: props.id,
+    username: user.value.username,
+    content: comment.value,
+  });
+
+  console.log(resp.data);
+  if (resp.data.status) {
+    const newComment = {
+      fullname: user.value.fullname,
+      avatar: user.value.avatar,
+      content: comment.value,
+    };
+
+    commentList.value.unshift(newComment);
+    comment.value = "";
+  } else {
+    alert("Gửi bình luận thất bại. Vui lòng thử lại.");
+  }
+};
 </script>
 
 <template>

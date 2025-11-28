@@ -1,14 +1,36 @@
 <script setup>
 import Comment from "../components/Comment/CommentBox.vue";
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
+import axios from "axios";
 
 const route = useRoute();
 const blog = ref({});
 
-const isLoading = ref(false);
+const isLoading = ref(true);
 
 const id = route.query.id;
+
+const getBlogData = async (blogId) => {
+  const response = await axios.get("/blogs/get-blog", {
+    params: {
+      id: blogId,
+    },
+  });
+  console.log(response.data);
+  blog.value = response.data;
+  isLoading.value = false;
+};
+
+const updateViewCount = async (blogId) => {
+  console.log(blogId);
+  await axios.put(`/blogs/update-view?blogId=${blogId}`);
+};
+
+onMounted(() => {
+  getBlogData(id);
+  updateViewCount(id);
+});
 </script>
 
 <template>
