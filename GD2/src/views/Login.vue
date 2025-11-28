@@ -1,9 +1,32 @@
 <script setup>
 import { ref } from "vue";
+import { useRouter } from "vue-router";
+import axios from "axios";
+
+const router = useRouter();
 
 const username = ref("");
 const password = ref("");
 const message = ref("");
+
+const login = async () => {
+  const res = await axios.post("/auth/login", {
+    username: username.value,
+    password: password.value,
+  });
+  console.log(res);
+  if (res.data.status == 1) {
+    sessionStorage.setItem("loggedIn", "true");
+    sessionStorage.setItem("user", JSON.stringify(res.data.user)); //session chỉ có thể lưu kiểu String => chuyển Json sang String
+    router.push("/");
+  } else if (res.data.status == 0) {
+    //Không có tài khoản
+    message.value = "*Không có tài khoản*";
+  } else {
+    // Sai mật khẩu
+    message.value = "*Sai mật khẩu*";
+  }
+};
 </script>
 
 <template>
