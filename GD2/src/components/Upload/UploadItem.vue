@@ -1,4 +1,6 @@
 <script setup>
+import axios from "axios";
+import { ref } from "vue";
 import { RouterLink } from "vue-router";
 
 const props = defineProps({
@@ -9,6 +11,25 @@ const props = defineProps({
 });
 
 const emits = defineEmits(["handledToogle"]);
+
+const item = ref(props.postData);
+
+const deleteItem = async () => {
+  if (confirm("Bạn có chắc chắn muốn xóa bài viết này?")) {
+    const resp = await axios.delete("/blogs/delete", {
+      params: {
+        blogId: item.value.id,
+      },
+    });
+
+    if (resp.data.status) {
+      alert("Xóa bài viết thành công");
+      window.location.reload();
+    } else {
+      alert("Xóa bài viết thất bại");
+    }
+  }
+};
 </script>
 
 <template>

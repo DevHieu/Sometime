@@ -1,5 +1,7 @@
 <script setup>
-import { ref } from "vue";
+import axios from "axios";
+import { ref, watch } from "vue";
+import { uploadImage } from "../../services/uploadImageService";
 
 const props = defineProps({
   postData: {
@@ -8,8 +10,10 @@ const props = defineProps({
   },
 });
 
+const isUpdating = ref(false);
 const submitType = ref("create");
 
+const id = ref(props.postData?.id || null);
 const title = ref(props.postData?.title || "");
 const content = ref(props.postData?.description || "");
 const image = ref(null);
@@ -17,6 +21,110 @@ const isImageChange = ref(false);
 const imageFile = ref(null);
 
 const emits = defineEmits(["handledToogle"]);
+
+watch(
+  () => props.postData,
+  (newPostData) => {
+    submitType.value = newPostData && newPostData.id ? "update" : "create";
+    if (newPostData && newPostData.id) {
+      submitType.value = "update";
+      isUpdating.value = true;
+      id.value = newPostData.id || null;
+      title.value = newPostData.title || "";
+      content.value = newPostData.content || "";
+      image.value = newPostData.image || "";
+    } else {
+      submitType.value = "create";
+      isUpdating.value = false;
+    }
+  },
+  { immediate: true }
+);
+
+const clearForm = () => {
+  submitType.value = "create";
+  isUpdating.value = false;
+  id.value = null;
+  title.value = "";
+  content.value = "";
+  image.value = null;
+  isImageChange.value = false;
+  imageFile.value = null;
+
+  const imageInput = document.getElementById("imageInput");
+  if (imageInput) {
+    imageInput.value = "";
+  }
+};
+
+const handleUploadImage = (e) => {
+  isImageChange.value = true;
+
+  const image = e.target.files[0];
+  const reader = new FileReader();
+  reader.readAsDataURL(image);
+  reader.onload = (e) => {
+    imageFile.value = e.target.result;
+  };
+};
+
+const handleFormSubmit = async () => {
+  emits("handledToogle", true);
+  const payload = {
+    id: id.value,
+    title: title.value,
+    content: content.value,
+    username: JSON.parse(sessionStorage.getItem("user")).username,
+  };
+
+  if (image.value == null && !isImageChange.value) {
+    alert("Vui lòng chọn ảnh cho bài đăng.");
+    return;
+  }
+
+  if (isImageChange.value) {
+    try {
+      const finalAvatarUrl = await uploadImage(imageFile.value);
+      payload.image = finalAvatarUrl;
+    } catch (error) {
+      isUpdating.value = false;
+      alert("Lỗi upload ảnh. Vui lòng thử lại.");
+      return;
+    }
+  } else {
+    payload.image = image.value;
+  }
+
+  if (isUpdating.value) {
+    updateBlog(payload);
+  } else {
+    createBlog(payload);
+  }
+  emits("handledToogle", false);
+};
+
+const createBlog = async (payload) => {
+  payload.id = null;
+  const resp = await axios.post("/blogs/create", payload);
+
+  if (resp.data.status) {
+    alert("Tạo bài đăng thành công!");
+    window.location.reload();
+  } else {
+    alert("Tạo bài đăng thất bại. Vui lòng thử lại.");
+    clearForm();
+  }
+};
+const updateBlog = async (payload) => {
+  const resp = await axios.put("/blogs/update-blog", payload);
+  if (resp.data.status) {
+    alert("Cập nhật bài đăng thành công!");
+    window.location.reload();
+  } else {
+    alert("Cập nhật bài đăng thất bại. Vui lòng thử lại.");
+    clearForm();
+  }
+};
 </script>
 
 <template>

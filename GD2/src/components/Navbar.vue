@@ -1,9 +1,16 @@
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import { RouterLink } from "vue-router";
 
 const isAuthenticated = ref();
 const user = ref({});
+
+onMounted(() => {
+  isAuthenticated.value = sessionStorage.getItem("loggedIn") === "true";
+  if (isAuthenticated) {
+    user.value = JSON.parse(sessionStorage.getItem("user")); //Chuyển String sang Objext
+  }
+});
 </script>
 
 <template>

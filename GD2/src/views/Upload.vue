@@ -1,12 +1,36 @@
 <script setup>
 import UploadForm from "../components/Upload/UploadForm.vue";
 import UploadItem from "../components/Upload/UploadItem.vue";
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
+import axios from "axios";
 
 const postList = ref([]);
 const postSelected = ref(null);
 
 const isHandled = ref(false);
+
+const fetchData = async (userId) => {
+  const response = await axios.get("/blogs/get-by-userid", {
+    params: {
+      userId: userId,
+    },
+  });
+  console.log(response.data);
+  postList.value = response.data;
+};
+
+const fillFormWithData = (postData) => {
+  console.log("ddafsdhjg");
+  postSelected.value = postData;
+};
+
+const isHandledToggle = (value) => {
+  isHandled.value = value;
+};
+
+onMounted(() => {
+  fetchData(JSON.parse(sessionStorage.getItem("user"))?.username);
+});
 </script>
 
 <template class="position-relative;">
