@@ -1,11 +1,37 @@
 <script setup>
 import { ref } from "vue";
+import { useRouter } from "vue-router";
+import axios from "axios";
+
+const router = useRouter();
 
 const message = ref("");
 const username = ref("");
 const fullname = ref("");
 const email = ref("");
 const password = ref("");
+
+const register = async () => {
+  const res = await axios.post("/auth/register", {
+    username: username.value,
+    fullname: fullname.value,
+    email: email.value,
+    password: password.value,
+  });
+
+  console.log(res);
+  if (res.data.status == 1) {
+    console.log(res.data);
+    sessionStorage.setItem("loggedIn", "true");
+    sessionStorage.setItem("user", JSON.stringify(res.data.user)); //session chỉ có thể lưu kiểu String => chuyển Json sang String
+    router.push("/");
+  } else if (res.data.status == 0) {
+    message.value = "*Tài khoản đã tồn tại*";
+  } else {
+    // Sai mật khẩu
+    message.value = "*Lỗi khi đăng ký tài khoản*";
+  }
+};
 </script>
 
 <template>
