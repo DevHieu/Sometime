@@ -31,10 +31,12 @@ const routes = [
       {
         path: "profile",
         component: Profile,
+        meta: { requiresAuth: true },
       },
       {
         path: "uploads",
         component: Upload,
+        meta: { requiresAuth: true },
       },
     ],
   },
@@ -60,11 +62,15 @@ const router = createRouter({
   routes,
 });
 
-router.beforeEach(async (to, from) => {
+router.beforeEach((to, from, next) => {
   const isAuthenticated = sessionStorage.getItem("loggedIn") === "true";
-  console.log(to);
-  if (!isAuthenticated && (to.path === "/uploads" || to.path === "/profile")) {
-    return { path: "/auth/login" };
+  if (
+    to.matched.some((record) => record.meta.requiresAuth) &&
+    !isAuthenticated.value
+  ) {
+    next({ path: "/auth/login" });
+  } else {
+    next();
   }
 });
 
